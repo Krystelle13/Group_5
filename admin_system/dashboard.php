@@ -223,9 +223,6 @@ $notif_count = $conn->query("SELECT COUNT(DISTINCT guest_name) FROM bookings WHE
                 <thead><tr><th>Guest Name</th><th>Date of Visit</th><th>Cottages</th><th>Action</th></tr></thead>
                 <tbody>
                     <?php 
-
-
-
                     // Query improved to show check_in date
                     $res = $conn->query("SELECT b.guest_name, b.check_in, GROUP_CONCAT(r.room_name) as names FROM bookings b JOIN rooms r ON b.room_id=r.room_id WHERE b.status='Pending' GROUP BY b.guest_name, b.check_in ORDER BY b.check_in ASC");
                     while($r = $res->fetch()){ ?>
