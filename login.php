@@ -14,7 +14,7 @@ if (isset($_POST['login'])) {
     <title>Login | Island Aura</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <style>
-        body { background: #f0f2f5; height: 100vh; display: flex; align-items: center; justify-content: center; }
+        body { background: #c4cedd; height: 100vh; display: flex; align-items: center; justify-content: center; }
         .login-card { width: 400px; background: white; border-radius: 20px; box-shadow: 0 10px 25px rgba(0,0,0,0.1); padding: 40px; text-align: center; }
         .logo-img { width: 120px; margin-bottom: 20px; } /* Removed any background container */
     </style>
