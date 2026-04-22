@@ -25,7 +25,7 @@ if(isset($_POST['confirm_booking'])) {
     $guest_email = $_POST['email']; 
     $contact_no = $_POST['contact']; 
     $check_in = $_POST['check_in']; 
-    $payment = $_POST['payment_method'] ?? 'Walk-in'; 
+    $payment = 'Walk-in'; 
     $adults = intval($_POST['adults']); 
     $children = intval($_POST['children']); 
     $total_amount = $_POST['total_amount_val']; 
@@ -116,7 +116,6 @@ if(isset($_POST['confirm_booking'])) {
                     <?php 
                     $rooms = $conn->query("SELECT * FROM rooms WHERE (room_type LIKE '%Room%' OR room_type LIKE '%Suite%')"); 
                     while($r = $rooms->fetch()): 
-                        // Logic for restriction
                         $isRestricted = (strpos($r['room_name'], 'Kubo') !== false || $r['availability'] != 'Available');
                     ?> 
                     <div class="col-md-6 col-xl-4"> 
@@ -146,7 +145,6 @@ if(isset($_POST['confirm_booking'])) {
                     <?php 
                     $cottages = $conn->query("SELECT * FROM rooms WHERE (room_type LIKE '%Cottage%' OR room_type LIKE '%Gazebo%')"); 
                     while($c = $cottages->fetch()): 
-                        // Restriction: Only Mushroom Cottage is clickable. The rest are restricted.
                         $isRestricted = (strpos($c['room_name'], 'Mushroom') === false || $c['availability'] != 'Available');
                     ?> 
                     <div class="col-md-6 col-xl-4"> 
@@ -198,8 +196,8 @@ if(isset($_POST['confirm_booking'])) {
                     <input type="date" name="check_in" id="check_in" class="form-control" min="<?= $today ?>"> 
                 </div>
                 <div class="mb-4">
-                    <select name="payment_method" class="form-select"> 
-                        <option value="GCash">GCash</option> 
+                    <label class="small fw-bold">Payment Method</label>
+                    <select name="payment_method" class="form-select" readonly> 
                         <option value="Walk-in">Walk-in</option> 
                     </select> 
                 </div>
