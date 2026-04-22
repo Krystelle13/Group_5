@@ -5,9 +5,7 @@
     </div>
     <div class="nav flex-column mt-3">
         <a href="dashboard.php" class="nav-link"><i class="fas fa-chart-line me-2"></i> Dashboard</a>
-        <a href="pending.php" class="nav-link"><i class="fas fa-calendar-alt me-2"></i> Awaiting Payment</a>
-        <a href="confirm.php" class="nav-link"><i class="fas fa-calendar-alt me-2"></i> Confirm Payment</a>
-         <a href="staying.php" class="nav-link"><i class="fas fa-calendar-alt me-2"></i> Currently Staying</a>
+        <a href="process_booking.php" class="nav-link"><i class="fas fa-calendar-alt me-2"></i> Booking Process</a>
         <a href="accommodations.php" class="nav-link"><i class="fas fa-bed me-2"></i> Accommodations</a>
         <a href="gallery.php" class="nav-link"><i class="fas fa-image me-2"></i> Gallery</a>
         <a href="settings.php" class="nav-link"><i class="fas fa-cog me-2"></i> Settings</a>
