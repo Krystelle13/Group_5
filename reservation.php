@@ -38,7 +38,6 @@ if(isset($_POST['confirm_booking'])) {
                 $conn->prepare($sql)->execute([$guest_name, $guest_email, $contact_no, $check_in, $room_id, $payment, $total_amount, ($adults + $children)]); 
             } 
 
-            // SUCCESS NOTIFICATION (The specific part you requested)
             echo "<script> 
                 document.addEventListener('DOMContentLoaded', function() {
                     Swal.fire({ 
@@ -75,11 +74,18 @@ if(isset($_POST['confirm_booking'])) {
         .section-header { position: relative; font-size: 1.25rem; color: var(--primary); margin: 40px 0 25px; padding-left: 15px; }
         .section-header::before { content: ''; position: absolute; left: 0; top: 0; height: 100%; width: 4px; background: var(--primary); border-radius: 4px; }
         .glass-card { background: rgba(255, 255, 255, 0.9); border-radius: 20px; box-shadow: 0 10px 30px rgba(0,74,173,0.05); }
-        .item-card { cursor: pointer; border-radius: 18px; overflow: hidden; background: white; border: 2px solid transparent; height: 100%; transition: 0.3s; }
+        
+        /* Item Card Styles */
+        .item-card { border-radius: 18px; overflow: hidden; background: white; border: 2px solid transparent; height: 100%; transition: 0.3s; position: relative; }
         .img-box { height: 200px; overflow: hidden; }
         .img-box img { width: 100%; height: 100%; object-fit: cover; }
         .item-check { display: none; }
         .item-check:checked + .item-card { border-color: var(--primary); background: #f0f7ff; }
+        
+        /* RESTRICTED / FULLY BOOKED STYLING */
+        .item-card.restricted { opacity: 0.6; filter: grayscale(0.8); cursor: not-allowed; pointer-events: none; }
+        .booked-label { position: absolute; top: 10px; right: 10px; background: #eb4d4b; color: white; padding: 5px 12px; border-radius: 50px; font-size: 0.7rem; font-weight: bold; z-index: 10; }
+
         .total-banner { background: linear-gradient(135deg, #2d3436 0%, #000 100%); color: var(--accent); border-radius: 15px; padding: 25px; margin: 20px 0; }
     </style> 
 </head> 
@@ -107,12 +113,23 @@ if(isset($_POST['confirm_booking'])) {
 
                 <h4 class="section-header fw-bold">ACCOMMODATIONS</h4> 
                 <div class="row g-4 mb-5"> 
-                    <?php $rooms = $conn->query("SELECT * FROM rooms WHERE availability='Available' AND (room_type LIKE '%Room%' OR room_type LIKE '%Suite%')"); 
-                    while($r = $rooms->fetch()): ?> 
+                    <?php 
+                    $rooms = $conn->query("SELECT * FROM rooms WHERE (room_type LIKE '%Room%' OR room_type LIKE '%Suite%')"); 
+                    while($r = $rooms->fetch()): 
+                        // Logic for restriction
+                        $isRestricted = (strpos($r['room_name'], 'Kubo') !== false || $r['availability'] != 'Available');
+                    ?> 
                     <div class="col-md-6 col-xl-4"> 
-                        <input type="checkbox" name="items[]" value="<?= $r['room_id']; ?>" data-name="<?= $r['room_name']; ?>" data-price="<?= $r['price']; ?>" class="item-check" id="i_<?= $r['room_id']; ?>"> 
-                        <div class="item-card shadow-sm"> 
-                            <label for="i_<?= $r['room_id']; ?>" class="w-100 h-100" style="cursor:pointer;"> 
+                        <input type="checkbox" name="items[]" value="<?= $r['room_id']; ?>" 
+                               data-name="<?= $r['room_name']; ?>" data-price="<?= $r['price']; ?>" 
+                               class="item-check" id="i_<?= $r['room_id']; ?>" 
+                               <?= $isRestricted ? 'disabled' : '' ?>> 
+                        
+                        <div class="item-card shadow-sm <?= $isRestricted ? 'restricted' : '' ?>"> 
+                            <?php if($isRestricted): ?>
+                                <div class="booked-label">FULLY BOOKED</div>
+                            <?php endif; ?>
+                            <label for="i_<?= $r['room_id']; ?>" class="w-100 h-100" style="cursor:<?= $isRestricted ? 'default' : 'pointer' ?>;"> 
                                 <div class="img-box"><img src="uploads/<?= $r['image']; ?>"></div> 
                                 <div class="p-4"> 
                                     <h6 class="fw-bold mb-2"><?= $r['room_name']; ?></h6> 
@@ -126,12 +143,23 @@ if(isset($_POST['confirm_booking'])) {
 
                 <h4 class="section-header fw-bold">COTTAGES & GAZEBOS</h4> 
                 <div class="row g-4 mb-5"> 
-                    <?php $cottages = $conn->query("SELECT * FROM rooms WHERE availability='Available' AND (room_type LIKE '%Cottage%' OR room_type LIKE '%Gazebo%')"); 
-                    while($c = $cottages->fetch()): ?> 
+                    <?php 
+                    $cottages = $conn->query("SELECT * FROM rooms WHERE (room_type LIKE '%Cottage%' OR room_type LIKE '%Gazebo%')"); 
+                    while($c = $cottages->fetch()): 
+                        // Restriction: Only Mushroom Cottage is clickable. The rest are restricted.
+                        $isRestricted = (strpos($c['room_name'], 'Mushroom') === false || $c['availability'] != 'Available');
+                    ?> 
                     <div class="col-md-6 col-xl-4"> 
-                        <input type="checkbox" name="items[]" value="<?= $c['room_id']; ?>" data-name="<?= $c['room_name']; ?>" data-price="<?= $c['price']; ?>" class="item-check" id="i_<?= $c['room_id']; ?>"> 
-                        <div class="item-card shadow-sm"> 
-                            <label for="i_<?= $c['room_id']; ?>" class="w-100 h-100" style="cursor:pointer;"> 
+                        <input type="checkbox" name="items[]" value="<?= $c['room_id']; ?>" 
+                               data-name="<?= $c['room_name']; ?>" data-price="<?= $c['price']; ?>" 
+                               class="item-check" id="i_<?= $c['room_id']; ?>"
+                               <?= $isRestricted ? 'disabled' : '' ?>> 
+                        
+                        <div class="item-card shadow-sm <?= $isRestricted ? 'restricted' : '' ?>"> 
+                            <?php if($isRestricted): ?>
+                                <div class="booked-label">UNAVAILABLE</div>
+                            <?php endif; ?>
+                            <label for="i_<?= $c['room_id']; ?>" class="w-100 h-100" style="cursor:<?= $isRestricted ? 'default' : 'pointer' ?>;"> 
                                 <div class="img-box"><img src="uploads/<?= $c['image']; ?>"></div> 
                                 <div class="p-4"> 
                                     <h6 class="fw-bold mb-2"><?= $c['room_name']; ?></h6> 
@@ -191,11 +219,9 @@ if(isset($_POST['confirm_booking'])) {
 </div> 
 
 <script> 
-    const checks = document.querySelectorAll('.item-check'); 
     const adultIn = document.getElementById('adult_count'); 
     const childIn = document.getElementById('child_count'); 
 
-    // FORM RESTRICTION LOGIC
     function validateForm() { 
         const name = document.getElementById('name').value;
         const email = document.getElementById('email').value;
@@ -204,23 +230,20 @@ if(isset($_POST['confirm_booking'])) {
         const adults = parseInt(adultIn.value) || 0;
         const children = parseInt(childIn.value) || 0;
 
-        // Restriction: check if form is filled out
         if(!name || !email || !contact || !date) {
-            Swal.fire({ icon: 'warning', title: 'Incomplete Form', text: 'Please fill out all personal details and the check-in date.' });
+            Swal.fire({ icon: 'warning', title: 'Incomplete Form', text: 'Please fill out all personal details.' });
             return false;
         }
 
-        // Restriction: check if at least one item is selected
         let anyChecked = false;
-        checks.forEach(c => { if(c.checked) anyChecked = true; });
+        document.querySelectorAll('.item-check:checked').forEach(c => { anyChecked = true; });
         if(!anyChecked) {
-            Swal.fire({ icon: 'warning', title: 'No Selection', text: 'Please select at least one Accommodation or Cottage.' });
+            Swal.fire({ icon: 'warning', title: 'No Selection', text: 'Please select an available accommodation.' });
             return false;
         }
 
-        // Restriction: check guest count
         if((adults + children) <= 0) {
-            Swal.fire({ icon: 'warning', title: 'Empty Guest Count', text: 'Please enter the number of guests.' });
+            Swal.fire({ icon: 'warning', title: 'Guest Count', text: 'Please enter number of guests.' });
             return false;
         }
 
@@ -237,7 +260,10 @@ if(isset($_POST['confirm_booking'])) {
         document.getElementById('adult_rate_display').innerText = ar.toLocaleString();
         document.getElementById('child_rate_display').innerText = cr.toLocaleString();
         
-        checks.forEach(c => { if(c.checked) total += parseFloat(c.getAttribute('data-price')); }); 
+        document.querySelectorAll('.item-check:checked').forEach(c => { 
+            total += parseFloat(c.getAttribute('data-price')); 
+        }); 
+
         total += (parseInt(adultIn.value) || 0) * ar;
         total += (parseInt(childIn.value) || 0) * cr;
 
@@ -246,7 +272,7 @@ if(isset($_POST['confirm_booking'])) {
     } 
 
     [adultIn, childIn].forEach(el => el.addEventListener('input', calc)); 
-    checks.forEach(c => c.addEventListener('change', calc)); 
+    document.querySelectorAll('.item-check').forEach(c => c.addEventListener('change', calc)); 
     document.querySelectorAll('.tour-type').forEach(r => r.addEventListener('change', calc)); 
     calc(); 
 </script> 
