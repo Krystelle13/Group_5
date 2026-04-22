@@ -1,42 +1,95 @@
 <?php 
 require_once 'db_connect.php'; 
 session_start();
-if (!isset($_SESSION['authenticated'])) { header("Location: login.php"); exit(); }
 
-// Calculate Total Income (Example: Sum of prices of checked-out bookings)
-$income_query = $conn->query("SELECT SUM(r.price) as total FROM bookings b JOIN rooms r ON b.room_id = r.room_id WHERE b.status = 'Checked-out'");
-$income = $income_query->fetch();
-$total_income = $income['total'] ?? 0;
+// Security: Redirect if not authenticated
+if (!isset($_SESSION['authenticated'])) { 
+    header("Location: login.php"); 
+    exit(); 
+}
+
+/** * FETCH TOTAL REVENUE
+ * This logic sums the price of rooms for bookings marked 'Checked-out'.
+ * If you use a different status like 'Confirmed' or 'Paid', change it in the WHERE clause.
+ */
+try {
+    $income_query = $conn->query("
+        SELECT SUM(r.price) as total 
+        FROM bookings b 
+        JOIN rooms r ON b.room_id = r.room_id 
+        WHERE b.status = 'Checked-out'
+    ");
+    
+    $income = $income_query->fetch(PDO::FETCH_ASSOC);
+    $total_income = $income['total'] ?? 0;
+} catch (PDOException $e) {
+    $total_income = 0; // Fallback
+}
 ?>
 
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8"><title>Dashboard | Island Aura</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard | Island Aura</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <style>
+        body { background-color: #f4f7f6; }
+        .main { padding: 30px; margin-left: 250px; /* Adjust based on your sidebar width */ }
+        .card { border: none; border-radius: 15px; box-shadow: 0 4px 12px rgba(0,0,0,0.08); }
+        .bg-income { background: linear-gradient(45deg, #0d6efd, #0dcaf0); color: white; }
+    </style>
 </head>
 <body>
+
     <?php include 'includes/sidebar.php'; ?>
+
     <div class="main">
         <h2 class="fw-bold mb-4">Resort Overview</h2>
+        
         <div class="row g-4">
             <div class="col-md-4">
-                <div class="card p-4 bg-primary text-white">
-                    <h6>Total Revenue</h6>
-                    <h3>₱ <?= number_format($total_income, 2) ?></h3>
+                <div class="card p-4 bg-income">
+                    <div class="d-flex align-items-center">
+                        <div class="flex-grow-1">
+                            <h6 class="text-uppercase fw-bold opacity-75 small">Total Revenue</h6>
+                            <h3 class="mb-0">₱ <?= number_format($total_income, 2) ?></h3>
+                        </div>
+                        <div class="icon">
+                            <i class="fa-solid fa-coins fa-2x opacity-50"></i>
+                        </div>
+                    </div>
                 </div>
             </div>
+
             <div class="col-md-8">
-                <div class="card p-4">
-                    <h5>Quick Navigation</h5>
-                    <div class="d-flex gap-2 mt-3">
-                        <a href="bookings.php" class="btn btn-outline-primary">Manage Bookings</a>
-                        <a href="accommodations.php" class="btn btn-outline-primary">Update Prices</a>
+                <div class="card p-4 h-100">
+                    <h5 class="fw-bold">Management Quick Links</h5>
+                    <p class="text-muted small">Update your room rates or process pending guest arrivals.</p>
+                    <div class="d-flex gap-2 mt-auto">
+                        <a href="bookings.php" class="btn btn-primary px-4">
+                            <i class="fa-solid fa-list-check me-2"></i>Manage Bookings
+                        </a>
+                        <a href="accommodations.php" class="btn btn-outline-primary px-4">
+                            <i class="fa-solid fa-bed me-2"></i>Update Prices
+                        </a>
                     </div>
                 </div>
             </div>
         </div>
+        
+        <div class="mt-4">
+            <div class="alert alert-info border-0 shadow-sm">
+                <i class="fa-solid fa-circle-info me-2"></i>
+                Revenue is calculated based on bookings with a <strong>'Checked-out'</strong> status.
+            </div>
+        </div>
+
     </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>
