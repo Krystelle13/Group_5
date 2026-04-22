@@ -26,60 +26,90 @@
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 
 <style>
+    /* In-enhance na Logout Container */
     .logout-container {
-        padding: 10px 20px;
-        margin-top: 20px;
-        border-top: 1px solid #444;
+        padding: 15px;
+        margin: 20px 15px;
+        border-radius: 12px;
+        background: rgba(255, 71, 87, 0.05); /* Very light red tint */
+        border: 1px solid rgba(255, 71, 87, 0.2);
+        transition: all 0.3s ease;
     }
+
+    .logout-container:hover {
+        background: rgba(255, 71, 87, 0.1);
+        border-color: rgba(255, 71, 87, 0.4);
+    }
+
     .btn-logout {
         color: #ff4757;
         text-decoration: none;
-        font-weight: bold;
+        font-weight: 600;
+        font-size: 14px;
         display: flex;
         align-items: center;
+        justify-content: center;
         transition: 0.3s;
         cursor: pointer;
         background: none;
         border: none;
         width: 100%;
+        gap: 10px;
     }
+
+    .btn-logout i {
+        font-size: 18px;
+    }
+
     .btn-logout:hover {
-        color: #ff6b81;
-        transform: translateX(5px);
+        color: #eb4b4b;
+        letter-spacing: 0.5px;
+    }
+
+    /* Custom SweetAlert Design para bumagay sa Island Aura */
+    .aura-popup {
+        border-radius: 20px !important;
+    }
+    .aura-confirm {
+        padding: 10px 25px !important;
+    }
+    .aura-cancel {
+        padding: 10px 25px !important;
     }
 </style>
-
-<div class="logout-container">
-    <button onclick="confirmLogout()" class="btn-logout">
-        <i class="fas fa-sign-out-alt me-2"></i> Logout
-    </button>
-</div>
 
 <script>
 function confirmLogout() {
     Swal.fire({
-        title: 'Are you sure?',
-        text: "You will be logged out from Island Aura Admin Management.",
+        title: 'Sign Out?',
+        text: "Are you sure you want to leave Island Aura Admin Management?",
         icon: 'warning',
+        iconColor: '#ff4757',
         showCancelButton: true,
-        confirmButtonColor: '#004aad', // Blue color ng resort
-        cancelButtonColor: '#d33',
-        confirmButtonText: 'Yes, logout!',
+        confirmButtonColor: '#004aad', // Resort Primary Blue
+        cancelButtonColor: '#6c757d',
+        confirmButtonText: 'Yes, Sign Out',
         cancelButtonText: 'Cancel',
         reverseButtons: true,
-        // Design ng Container
         background: '#ffffff',
-        backdrop: `rgba(0, 0, 0, 0.5)`,
+        backdrop: `rgba(0, 0, 0, 0.4)`,
         customClass: {
-            popup: 'rounded-4 shadow-lg',
+            popup: 'aura-popup shadow-lg',
             title: 'fw-bold',
-            confirmButton: 'px-4 py-2 rounded-pill',
-            cancelButton: 'px-4 py-2 rounded-pill'
+            confirmButton: 'aura-confirm rounded-pill',
+            cancelButton: 'aura-cancel rounded-pill'
         }
     }).then((result) => {
         if (result.isConfirmed) {
-            // Pag-click ng YES, pupunta siya sa logout.php na ginawa mo
-            window.location.href = 'logout.php';
+            // Loading effect bago mag-redirect
+            Swal.fire({
+                title: 'Signing out...',
+                timer: 800,
+                showConfirmButton: false,
+                didOpen: () => { Swal.showLoading() }
+            }).then(() => {
+                window.location.href = 'logout.php';
+            });
         }
     })
 }
