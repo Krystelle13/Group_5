@@ -8,10 +8,7 @@ if (!isset($_SESSION['authenticated'])) {
     exit(); 
 }
 
-/** * FETCH TOTAL REVENUE
- * This logic sums the price of rooms for bookings marked 'Checked-out'.
- * If you use a different status like 'Confirmed' or 'Paid', change it in the WHERE clause.
- */
+/** * FETCH TOTAL REVENUE */
 try {
     $income_query = $conn->query("
         SELECT SUM(r.price) as total 
@@ -38,7 +35,7 @@ try {
     
     <style>
         body { background-color: #f4f7f6; }
-        .main { padding: 30px; margin-left: 250px; /* Adjust based on your sidebar width */ }
+        .main { padding: 30px; margin-left: 250px; }
         .card { border: none; border-radius: 15px; box-shadow: 0 4px 12px rgba(0,0,0,0.08); }
         .bg-income { background: linear-gradient(45deg, #0d6efd, #0dcaf0); color: white; }
     </style>
@@ -51,7 +48,7 @@ try {
         <h2 class="fw-bold mb-4">Resort Overview</h2>
         
         <div class="row g-4">
-            <div class="col-md-4">
+            <div class="col-md-6 col-lg-4">
                 <div class="card p-4 bg-income">
                     <div class="d-flex align-items-center">
                         <div class="flex-grow-1">
@@ -61,21 +58,6 @@ try {
                         <div class="icon">
                             <i class="fa-solid fa-coins fa-2x opacity-50"></i>
                         </div>
-                    </div>
-                </div>
-            </div>
-
-            <div class="col-md-8">
-                <div class="card p-4 h-100">
-                    <h5 class="fw-bold">Management Quick Links</h5>
-                    <p class="text-muted small">Update your room rates or process pending guest arrivals.</p>
-                    <div class="d-flex gap-2 mt-auto">
-                        <a href="bookings.php" class="btn btn-primary px-4">
-                            <i class="fa-solid fa-list-check me-2"></i>Manage Bookings
-                        </a>
-                        <a href="accommodations.php" class="btn btn-outline-primary px-4">
-                            <i class="fa-solid fa-bed me-2"></i>Update Prices
-                        </a>
                     </div>
                 </div>
             </div>
