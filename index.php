@@ -1,6 +1,6 @@
 <?php 
 require_once 'db_connect.php'; 
-// Siguraduhin na ang db_connect.php ay naglalaman ng valid na $conn variable
+// Assumes db_connect.php has a valid $conn variable
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -14,7 +14,7 @@ require_once 'db_connect.php';
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css">
     
     <style>
-        :root { --primary-blue: #004aad; }
+        :root { --primary-blue: #004aad; --accent-orange: #ff9f43; }
         body { font-family: 'Poppins', sans-serif; background-color: #fcfcfc; }
 
         .hero-section { 
@@ -30,7 +30,7 @@ require_once 'db_connect.php';
         }
 
         .section-title { font-weight: 800; color: var(--primary-blue); position: relative; padding-bottom: 15px; text-transform: uppercase; }
-        .section-title::after { content: ''; position: absolute; bottom: 0; left: 50%; transform: translateX(-50%); width: 50px; height: 4px; background: #ff9f43; }
+        .section-title::after { content: ''; position: absolute; bottom: 0; left: 50%; transform: translateX(-50%); width: 50px; height: 4px; background: var(--accent-orange); }
 
         .rate-card { border: none; border-radius: 20px; transition: 0.3s; overflow: hidden; background: white; }
         .rate-card:hover { transform: translateY(-10px); box-shadow: 0 15px 30px rgba(0,0,0,0.1); }
@@ -41,6 +41,9 @@ require_once 'db_connect.php';
         .gallery-item:hover img { transform: scale(1.1); filter: brightness(70%); }
         .gallery-overlay { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); color: white; opacity: 0; transition: 0.3s; }
         .gallery-item:hover .gallery-overlay { opacity: 1; }
+
+        /* Custom Modal Styling */
+        .availability-badge { padding: 10px 20px; border-radius: 50px; font-weight: bold; font-size: 0.9rem; }
     </style>
 </head>
 <body>
@@ -62,19 +65,62 @@ require_once 'db_connect.php';
         <div class="row g-4">
             <?php 
             if(isset($conn)):
-                $res = $conn->query("SELECT * FROM rooms");
-                while($r = $res->fetch()): ?>
+                // Grouping by room_name to show unique types and counting remaining available units
+                $res = $conn->query("SELECT *, 
+                    (SELECT COUNT(*) FROM rooms r2 WHERE r2.room_name = rooms.room_name AND r2.availability = 'Available') as qty_left 
+                    FROM rooms GROUP BY room_name");
+                
+                while($r = $res->fetch()): 
+                    $roomID = $r['room_id'];
+                    $name = htmlspecialchars($r['room_name']);
+                    $left = (int)$r['qty_left'];
+            ?>
                     <div class="col-md-4">
                         <div class="card rate-card shadow-sm h-100">
                             <img src="uploads/<?= htmlspecialchars($r['image']) ?>" class="card-img-top">
                             <div class="card-body p-4 text-center">
-                                <h5 class="fw-bold"><?= htmlspecialchars($r['room_name']) ?></h5>
+                                <h5 class="fw-bold"><?= $name ?></h5>
                                 <p class="text-muted small">Max <?= htmlspecialchars($r['max_pax']) ?> Pax | <?= htmlspecialchars($r['room_type']) ?></p>
                                 <h3 class="text-primary fw-bold mb-4">₱<?= number_format($r['price']) ?></h3>
-                                <a href="reservation.php" class="btn btn-outline-primary rounded-pill w-100 fw-bold">Check Availability</a>
+                                
+                                <button type="button" class="btn btn-outline-primary rounded-pill w-100 fw-bold" 
+                                        data-bs-toggle="modal" data-bs-target="#modal<?= $roomID ?>">
+                                    Check Availability
+                                </button>
                             </div>
                         </div>
                     </div>
+
+                    <div class="modal fade" id="modal<?= $roomID ?>" tabindex="-1" aria-hidden="true">
+                        <div class="modal-dialog modal-dialog-centered">
+                            <div class="modal-content border-0" style="border-radius: 25px;">
+                                <div class="modal-header border-0 pb-0">
+                                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                                </div>
+                                <div class="modal-body text-center p-5 pt-0">
+                                    <div class="mb-4">
+                                        <i class="fas fa-hotel fa-4x text-primary animate__animated animate__bounceIn"></i>
+                                    </div>
+                                    <h4 class="fw-bold mb-3"><?= $name ?></h4>
+                                    
+                                    <?php if($left > 0): ?>
+                                        <div class="availability-badge bg-success text-white mb-4">
+                                            <i class="fas fa-check-circle me-2"></i> ONLY <?= $left ?> UNIT(S) LEFT
+                                        </div>
+                                        <p class="text-muted small mb-4">Grab yours now before someone else does!</p>
+                                        <a href="reservation.php" class="btn btn-primary btn-lg rounded-pill w-100 fw-bold shadow">BOOK THIS ROOM</a>
+                                    <?php else: ?>
+                                        <div class="availability-badge bg-danger text-white mb-4">
+                                            <i class="fas fa-times-circle me-2"></i> CURRENTLY FULLY BOOKED
+                                        </div>
+                                        <p class="text-muted small mb-4">Check back soon or try another accommodation.</p>
+                                        <button class="btn btn-secondary btn-lg rounded-pill w-100 fw-bold" data-bs-dismiss="modal">VIEW OTHERS</button>
+                                    <?php endif; ?>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
                 <?php endwhile; 
             endif; ?>
         </div>
@@ -89,15 +135,13 @@ require_once 'db_connect.php';
             <div class="row g-3">
                 <?php
                 if(isset($conn)):
-                    // Query mula sa gallery table
                     $gallery_res = $conn->query("SELECT * FROM gallery ORDER BY id DESC");
                     if($gallery_res && $gallery_res->rowCount() > 0):
                         while($g = $gallery_res->fetch()): 
-                            $imgName = isset($g['image_name']) ? $g['image_name'] : '';
-                            // Kuhanin ang caption mula sa database
-                            $caption = isset($g['caption']) ? $g['caption'] : '';
+                            $imgName = $g['image_name'] ?? '';
+                            $caption = $g['caption'] ?? '';
                             if($imgName):
-                        ?>
+                ?>
                             <div class="col-md-4 col-6">
                                 <div class="gallery-wrapper bg-white shadow-sm rounded-4 overflow-hidden h-100">
                                     <a href="uploads/gallery/<?= htmlspecialchars($imgName) ?>" class="glightbox gallery-item">
@@ -113,14 +157,14 @@ require_once 'db_connect.php';
                                     <?php endif; ?>
                                 </div>
                             </div>
-                        <?php 
+                <?php 
                             endif;
                         endwhile;
                     else: ?>
                         <div class="col-12 text-center py-5">
                             <p class="text-muted italic">No photos uploaded in the gallery yet.</p>
                         </div>
-                    <?php endif; 
+                <?php endif; 
                 endif; ?>
             </div>
         </div>
@@ -133,15 +177,13 @@ require_once 'db_connect.php';
     <script>
         const lightbox = GLightbox({ selector: '.glightbox' });
         
-        // Smooth scroll
+        // Smooth scroll for anchors
         document.querySelectorAll('a[href^="#"]').forEach(anchor => {
             anchor.addEventListener('click', function (e) {
                 e.preventDefault();
                 const target = document.querySelector(this.getAttribute('href'));
                 if(target) {
-                    target.scrollIntoView({
-                        behavior: 'smooth'
-                    });
+                    target.scrollIntoView({ behavior: 'smooth' });
                 }
             });
         });
